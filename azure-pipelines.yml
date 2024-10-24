@@ -1,16 +1,26 @@
 variables:
-  buildConfiguration: 'Release'
+  buildConfiguration: 'Release'  # Correctly define the build configuration variable
 
 steps:
 - script: dotnet build --configuration $(buildConfiguration)
   displayName: 'dotnet build $(buildConfiguration)'
+
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
     publishWebProjects: true
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)' # Specify the output directory for published files
+    zipAfterPublish: true # Create a zip file after publishing
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)' # Path to publish artifacts
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
 - task: AzureWebApp@1
   inputs:
-    azureSubscription: 'gab-dotNetSP'
-    appType: 'webAppLinux'
-    appName: 'gab-webapp'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    azureSubscription: 'gab-dotNet'  # Change this to your actual Azure subscription name
+    appType: 'WebApp'  # Ensure this is correct for your application type
+    appName: 'srisktest'  # Change this to your actual Azure Web App name
+    package: '$(Build.ArtifactStagingDirectory)/**/*.zip'  # Adjust the package path if needed
